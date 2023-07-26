@@ -1,28 +1,46 @@
-// utils/database.js
+import { LinearClient } from '@linear/sdk';
 
-// Simulated database object
-const database = {
-  users: [
-    { id: 1, name: "John Doe", email: "john@example.com" },
-    { id: 2, name: "Jane Smith", email: "jane@example.com" },
-    // Add more user data as needed
-  ],
-  // Add more collections or data as needed
-};
+export async function POST(request) {
+  try {
+    const apiKey = 'YOUR_PERSONAL_API_KEY';
+    const client = new LinearClient({
+      apiKey: apiKey
+    });
 
-// Functions to interact with the simulated database
-export const getUsers = () => {
-  return database.users;
-};
+    const data = await request.json();
 
-export const getUserById = (id) => {
-  return database.users.find((user) => user.id === id);
-};
+    // Extract the necessary data from the request body
+    const { title, description, teamId } = data;
 
-export const addUser = (user) => {
-  database.users.push(user);
-};
+    // Create a new issue using the issueCreate mutation
+    const createIssueInput = {
+      title: title,
+      description: description,
+      teamId: teamId
+    };
 
-// Add more functions for CRUD operations as needed
+    const issueCreateResponse = await client.mutation.issueCreate({
+      input: createIssueInput
+    });
 
-export default database;
+    // Get the newly created issue from the response
+    const newIssue = issueCreateResponse?.issue;
+
+    // Return the created issue as the response
+    return new Response(JSON.stringify(newIssue), {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      status: 201 // 201 indicates the resource was successfully created
+    });
+  } catch (error) {
+    console.error('Error creating the issue:', error.message);
+
+    return new Response(JSON.stringify({ error: 'Failed to create the issue' }), {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      status: 500 // 500 indicates an internal server error
+    });
+  }
+}
